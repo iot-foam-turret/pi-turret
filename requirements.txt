@@ -1,1 +1,2 @@
 adafruit-circuitpython-motorkit
+pylint

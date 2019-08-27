@@ -1,4 +1,4 @@
-from dc_motor.motor import DCMotor, feed_pin, flywheel_pin
+from pi_turret.dc_motor.motor import DCMotor, feed_pin, flywheel_pin
 import time
 
 
