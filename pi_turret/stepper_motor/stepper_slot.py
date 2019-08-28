@@ -1,3 +1,5 @@
+"""StepperMotorSlot
+"""
 from enum import Enum
 
 

@@ -1,12 +1,14 @@
-import RPi.GPIO as GPIO
+"""DCMotor
+"""
 import time
+import RPi.GPIO as GPIO
 
-flywheel_pin = 21
-feed_pin = 19
+FLYWHEEL_PIN = 21
+FEED_PIN = 19
 
 GPIO.setmode(GPIO.BCM)
 
-class DCMotor(object):
+class DCMotor:
     """DC Motor commonly used in foam blasters.
     """
 
@@ -15,29 +17,36 @@ class DCMotor(object):
         GPIO.setup(self.gpio, GPIO.OUT)
 
 
-    def on(self):
+    def power(self):
+        """Signal DC motor to turn on
+        """
         GPIO.output(self.gpio, GPIO.HIGH)
 
 
     def off(self):
+        """Signal DC motor to turn off
+        """
         GPIO.output(self.gpio, GPIO.LOW)
 
 
     def test(self):
-        
-        self.on()
+        """Signal DC motor to turn on, wait, then turn off
+        """
+        self.power()
 
         time.sleep(0.5)
 
         self.off()
-    
 
+    @staticmethod
     def cleanup():
+        """Reset GPIO. Should be called at the end of the program
+        """
         GPIO.cleanup()
 
 
 if __name__ == "__main__":
-    
-    motor = DCMotor(feed_pin)
-    motor.test()
+
+    MOTOR = DCMotor(FEED_PIN)
+    MOTOR.test()
     DCMotor.cleanup()
