@@ -3,7 +3,7 @@
 import time
 from adafruit_motorkit import MotorKit
 from adafruit_motor import stepper
-from stepper_slot import StepperMotorSlot
+from pi_turret.stepper_motor.stepper_slot import StepperMotorSlot
 
 KIT = MotorKit()
 
@@ -14,27 +14,30 @@ class StepperMotor:
     """
 
     def __init__(self, stepperMotorSlot):
+        self.position = None
         if stepperMotorSlot == StepperMotorSlot.STEPPER_ONE:
             self.motor = KIT.stepper1
 
         if stepperMotorSlot == StepperMotorSlot.STEPPER_TWO:
             self.motor = KIT.stepper2
 
-    def step_forward(self, degrees):
+    def __del__(self):
+        self.motor.release()
+
+
+    def step_forward(self, degrees=STEP_DEGREES):
         """Converts the given degrees to steps and moves the motor forward
         """
-        for i in range(round(degrees/STEP_DEGREES)):
-            result = self.motor.onestep(direction=stepper.FORWARD, style=stepper.DOUBLE)
-            print(f"{i}: {result}")
+        for _ in range(round(degrees/STEP_DEGREES)):
+            self.position = self.motor.onestep(direction=stepper.FORWARD, style=stepper.DOUBLE)
             time.sleep(0.02)
 
 
-    def step_backward(self, degrees):
+    def step_backward(self, degrees=STEP_DEGREES):
         """Converts the given degrees to steps and moves the motor backward
         """
-        for i in range(round(degrees/STEP_DEGREES)):
-            result = self.motor.onestep(direction=stepper.BACKWARD, style=stepper.DOUBLE)
-            print(f"{i}: {result}")
+        for _ in range(round(degrees/STEP_DEGREES)):
+            self.position = self.motor.onestep(direction=stepper.BACKWARD, style=stepper.DOUBLE)
             time.sleep(0.02)
 
 
@@ -44,25 +47,9 @@ class StepperMotor:
 
         self.step_forward(45)
 
-
-        for i in range(round(45/STEP_DEGREES)):
-            result = self.motor.onestep(direction=stepper.FORWARD, style=stepper.DOUBLE)
-            print(f"{i}: {result}")
-            time.sleep(0.02)
-
-        # time.sleep(.5)
         self.step_backward(90)
-        for i in range(round(90/STEP_DEGREES)):
-            result = self.motor.onestep(direction=stepper.BACKWARD, style=stepper.DOUBLE)
-            print(f"{i}: {result}")
-            time.sleep(0.02)
 
-        # time.sleep(.5)
-
-        for i in range(round(45/STEP_DEGREES)):
-            result = self.motor.onestep(direction=stepper.FORWARD, style=stepper.DOUBLE)
-            print(f"{i}: {result}")
-            time.sleep(0.02)
+        self.step_forward(45)
 
         # time.sleep(1)
         # self.motor.release()
@@ -70,15 +57,13 @@ class StepperMotor:
 
 if __name__ == "__main__":
 
-    MOTOR_ONE = StepperMotor(StepperMotorSlot.STEPPER_ONE)
-    MOTOR_ONE.test()
-
-    # time.sleep(1)
-
     MOTOR_TWO = StepperMotor(StepperMotorSlot.STEPPER_TWO)
     MOTOR_TWO.test()
 
+    MOTOR_ONE = StepperMotor(StepperMotorSlot.STEPPER_ONE)
+    MOTOR_ONE.test()
+
+    time.sleep(1)
+
     MOTOR_ONE.motor.release()
     MOTOR_TWO.motor.release()
-    # while True:
-    #     time.sleep(1)

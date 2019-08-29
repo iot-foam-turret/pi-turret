@@ -10,10 +10,32 @@ class Turret:
 
     def __init__(self):
         self.blaster = Hyperfire()
-        self.pitch_motor = StepperMotor(StepperMotorSlot.STEPPER_ONE)
-        self.yaw_motor = StepperMotor(StepperMotorSlot.STEPPER_TWO)
-
+        self.pitch_motor = StepperMotor(StepperMotorSlot.STEPPER_TWO)
+        self.yaw_motor = StepperMotor(StepperMotorSlot.STEPPER_ONE)
 
     def calibrate(self):
         """Calibrate the position of the stepper motors
         """
+
+    def move_up(self):
+        """Move up one step
+        """
+        self.pitch_motor.step_backward()
+
+
+    def move_down(self):
+        """Move down one step
+        """
+        self.pitch_motor.step_forward()
+
+
+    def move_left(self):
+        """Move left one step
+        """
+        self.yaw_motor.step_backward()
+
+
+    def move_right(self):
+        """Move right one step
+        """
+        self.yaw_motor.step_forward()
