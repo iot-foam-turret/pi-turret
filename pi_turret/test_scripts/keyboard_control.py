@@ -2,7 +2,10 @@
 """Module for testing the turret with the keyboard controls
 """
 import curses
-from pi_turret.turret.turret import Turret
+try:
+    from pi_turret.turret.turret import Turret
+except:
+    from pi_turret.turret.mock_turret import Turret
 
 def main():
     """Main script to control the turret with the keyboard

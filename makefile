@@ -5,5 +5,5 @@ lint:
 	pylint pi_turret
 
 run:
-	python -m pi_turret
+	python -m pi_turret -c $(c)
 
