@@ -5,7 +5,7 @@ from pi_turret.test_scripts.keyboard_control import main as keyboard_main
 print("Hello from Pi Turret")
 
 try:
-    opts, args = getopt.getopt(sys.argv[1:], "hc=", "controls=")
+    opts, args = getopt.getopt(sys.argv[1:], "hc:", "controls=")
 except getopt.GetoptError:
     print("Error getting options")
 
