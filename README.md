@@ -8,4 +8,16 @@ This project uses Python 3. The best way to set that up is to first create a vir
 
 The [stepper motor hat](https://learn.adafruit.com/adafruit-dc-and-stepper-motor-hat-for-raspberry-pi/overview) requires I2C to be enabled on the Raspberry Pi. [Instructions](https://learn.adafruit.com/adafruits-raspberry-pi-lesson-4-gpio-setup/configuring-i2c)
 
-Required packages are included in the requirements.txt file so install using `pip install -r requirements.txt`
+Before creating a virtual env:
+```
+sudo apt install python3-opencv
+```
+After OpenCV is install, create your virtual environment
+```
+mkvirtualenv --system-site-packages pi_turret
+```
+
+Required packages are included in the requirements.txt file so install using `pip install -r requirements.txt` or 
+```
+make init
+```

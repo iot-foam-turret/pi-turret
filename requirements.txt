@@ -3,6 +3,6 @@ adafruit-circuitpython-motorkit
 picamera
 
 ##### Generic Python
-opencv-python
+# opencv-python # If this fails on the pi: sudo apt install python3-opencv
 imutils
 pylint

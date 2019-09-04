@@ -1,5 +1,5 @@
 # import picamera
-from cv2 import cv2
+import cv2
 import io
 import numpy as np
 import imutils
@@ -36,7 +36,7 @@ def handle_new_frame(frame, past_frame, min_area):
     thresh = cv2.threshold(frame_detla, 50, 255, cv2.THRESH_BINARY)[1]
     # dilate the thresholded image to fill in holes, then find contours on thresholded image
     thresh = cv2.dilate(thresh, None, iterations=2)
-    contours, _ = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    _, contours, _ = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     # cnts = cnts[0] if imutils.is_cv2() else cnts[1]
 
     # loop over the contours
@@ -59,8 +59,8 @@ if __name__ == '__main__':
             past_frame, updated_frame = handle_new_frame(frame, past_frame, min_area)
             if updated_frame is not None:
                 frame = updated_frame
-            rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2BGRA)
-            cv2.imshow('frame', rgb)
+            # rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2BGRA)
+            # cv2.imshow('frame', rgb)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
     finally:
