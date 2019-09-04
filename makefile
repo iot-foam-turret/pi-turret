@@ -2,7 +2,7 @@ init:
 	pip install -r requirements.txt
 
 lint:
-	pylint pi_turret
+	pylint --extension-pkg-whitelist=cv2 pi_turret
 
 run:
 	python -m pi_turret -c $(c)

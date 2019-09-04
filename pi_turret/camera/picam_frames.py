@@ -1,7 +1,9 @@
+"""Iterator that loops over frames from PiCamera."""
 import cv2
 import io
 import numpy as np
 import picamera
+from pi_turret.camera.preview import preview
 
 
 class PiCamFrames:
@@ -15,6 +17,7 @@ class PiCamFrames:
     def __del__(self):
         self.camera.close()
 
+
     def __iter__(self):
         return self
 
@@ -26,16 +29,9 @@ class PiCamFrames:
         frame = cv2.imdecode(data, 1)
 
         if frame is None:
-            raise StopIteration 
+            raise StopIteration
         return frame
 
 
 if __name__ == "__main__":
-    for frame in PiCamFrames():
-        rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2BGRA)
-        cv2.imshow('frame', rgb)
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
-
-    #cv2.imwrite('capture.jpg', frame)
-    cv2.destroyAllWindows()
+    preview(PiCamFrames())

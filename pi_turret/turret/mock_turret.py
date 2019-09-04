@@ -1,3 +1,5 @@
+"""Mock Turret that can be used when developing not on a Raspberry Pi
+"""
 
 class Turret:
     """Mock Turret that can be used when developing not on a Raspberry Pi
