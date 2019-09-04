@@ -68,6 +68,7 @@ def test_motion_tracking():
             if motion is not None:
                 for c in motion:
                     (x, y, w, h) = cv2.boundingRect(c)
+                    print(f"Motion Bounds: x: {x} y: {y} w:{w} h:{h}")
                     cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
             # out.write(frame)
             

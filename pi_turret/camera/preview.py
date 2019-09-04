@@ -1,5 +1,5 @@
 """Preview a camera feed"""
-from cv2 import cv2
+import cv2
 
 def preview(frames):
     """Preview a camera feed"""
