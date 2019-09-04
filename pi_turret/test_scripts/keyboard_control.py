@@ -1,10 +1,8 @@
-
-"""Module for testing the turret with the keyboard controls
-"""
+"""Module for testing the turret with the keyboard controls"""
 import curses
 try:
     from pi_turret.turret.turret import Turret
-except:
+except ImportError:
     from pi_turret.turret.mock_turret import Turret
 
 def main():
