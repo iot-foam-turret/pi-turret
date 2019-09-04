@@ -34,8 +34,8 @@ def handle_new_frame(frame, past_frame, min_area):
     _, thresh = cv2.threshold(frame_delta, 50, 255, cv2.THRESH_BINARY)
     # dilate the thresholded image to fill in holes, then find contours on thresholded image
     thresh = cv2.dilate(thresh, None, iterations=2)
-    _, contours, _ = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    # cnts = cnts[0] if imutils.is_cv2() else cnts[1]
+    cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    contours = cnts[0] if len(cnts) is 2 else cnts[1]
 
     motion = []
     # loop over the contours
