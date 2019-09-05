@@ -102,3 +102,6 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+# AWS IoT
+pi_turret/iot/.device_cert/*
