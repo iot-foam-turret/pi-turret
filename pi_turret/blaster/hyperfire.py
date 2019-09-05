@@ -36,7 +36,7 @@ class Hyperfire:
         """Signals the flywheels to rev then the feeder for the given duration
         """
         self.flywheels_on()
-        time.sleep(0.2)
+        time.sleep(1)
         self.feed_on()
         # Firing duration
         time.sleep(duration)
@@ -48,6 +48,6 @@ class Hyperfire:
 
 if __name__ == "__main__":
     BLASTER = Hyperfire()
-    BLASTER.burst_fire()
+    BLASTER.burst_fire(0.5)
     DCMotor.cleanup()
     

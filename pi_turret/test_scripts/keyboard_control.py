@@ -9,7 +9,7 @@ def main():
     """Main script to control the turret with the keyboard
     """
     turret = Turret()
-
+    # turret.calibrate()
     # get the curses screen window
     screen = curses.initscr()
 
@@ -40,6 +40,9 @@ def main():
             elif char == curses.KEY_DOWN:
                 turret.move_down()
                 screen.addstr(0, 0, 'down ')
+            elif char == ord(' '):
+                screen.addstr(0, 0, 'FIRE!')
+                turret.blaster.burst_fire(0.5)
     finally:
         # shut down cleanly
         curses.nocbreak()

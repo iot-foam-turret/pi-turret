@@ -20,12 +20,14 @@ class DCMotor:
     def power(self):
         """Signal DC motor to turn on
         """
+        GPIO.setmode(GPIO.BCM)
         GPIO.output(self.gpio, GPIO.HIGH)
 
 
     def off(self):
         """Signal DC motor to turn off
         """
+        GPIO.setmode(GPIO.BCM)
         GPIO.output(self.gpio, GPIO.LOW)
 
 
@@ -47,6 +49,6 @@ class DCMotor:
 
 if __name__ == "__main__":
 
-    MOTOR = DCMotor(FEED_PIN)
+    MOTOR = DCMotor(FLYWHEEL_PIN)
     MOTOR.test()
     DCMotor.cleanup()
