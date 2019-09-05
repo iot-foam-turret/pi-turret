@@ -3,6 +3,7 @@
 from pi_turret.blaster.hyperfire import Hyperfire
 from pi_turret.stepper_motor.stepper import StepperMotor
 from pi_turret.stepper_motor.stepper_slot import StepperMotorSlot
+from pi_turret.sensor.button import yaw_button, pitch_button
 
 class Turret:
     """Turret that can move left/right and up/down
@@ -16,6 +17,17 @@ class Turret:
     def calibrate(self):
         """Calibrate the position of the stepper motors
         """
+        yaw_sensor = yaw_button()
+        while not yaw_sensor.is_pressed():
+            self.move_left()
+        for _ in range(75):
+            self.move_right()
+
+        pitch_sensor = pitch_button()
+        while not pitch_sensor.is_pressed():
+            self.move_up()
+        for _ in range(21):
+            self.move_down()
 
     def move_up(self):
         """Move up one step
@@ -39,3 +51,9 @@ class Turret:
         """Move right one step
         """
         self.yaw_motor.step_forward()
+
+if __name__ == "__main__":
+    TURRET = Turret()
+    TURRET.calibrate()
+    while True:
+        pass
