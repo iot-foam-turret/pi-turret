@@ -1,15 +1,44 @@
 """Module for testing the turret with the keyboard controls"""
 import curses
+import threading
+import queue as Queue
 try:
     from pi_turret.turret.turret import Turret
 except ImportError:
     from pi_turret.turret.mock_turret import Turret
 
+UP = "UP"
+DOWN = "DOWN"
+LEFT = "LEFT"
+RIGHT = "RIGHT"
+FIRE = "FIRE"
+
+def turret_thread(tQueue):
+    turret = Turret()
+    # turret.calibrate()
+    while True:
+        try:
+            command = tQueue.get(block=False, timeout= 0.1)
+        except Queue.Empty:
+            continue
+        if command == UP:
+            turret.move_up()
+        elif command == DOWN:
+            turret.move_down()
+        elif command == LEFT:
+            turret.move_left()
+        elif command == RIGHT:
+            turret.move_right()
+        elif command == FIRE:
+            turret.blaster.burst_fire(0.5)
+
 def main():
     """Main script to control the turret with the keyboard
     """
-    turret = Turret()
-    # turret.calibrate()
+    queue = Queue.Queue()
+    thread = threading.Thread(target=turret_thread, args=[queue], daemon=True)
+    thread.start()
+
     # get the curses screen window
     screen = curses.initscr()
 
@@ -28,21 +57,21 @@ def main():
             if char == ord('q'):
                 break
             elif char == curses.KEY_RIGHT:
-                turret.move_right()
                 # print doesn't work with curses, use addstr instead
+                queue.put(RIGHT)
                 screen.addstr(0, 0, 'right')
             elif char == curses.KEY_LEFT:
-                turret.move_left()
+                queue.put(LEFT)
                 screen.addstr(0, 0, 'left ')
             elif char == curses.KEY_UP:
-                turret.move_up()
+                queue.put(UP)
                 screen.addstr(0, 0, 'up   ')
             elif char == curses.KEY_DOWN:
-                turret.move_down()
+                queue.put(DOWN)
                 screen.addstr(0, 0, 'down ')
             elif char == ord(' '):
+                queue.put(FIRE)
                 screen.addstr(0, 0, 'FIRE!')
-                turret.blaster.burst_fire(0.5)
     finally:
         # shut down cleanly
         curses.nocbreak()
