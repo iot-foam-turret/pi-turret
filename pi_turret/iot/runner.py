@@ -7,6 +7,9 @@ from pi_turret.turret import Turret
 
 def turret_thread_target(desired_state_queue: Queue, actual_state_queue: Queue):
     turret = Turret()
+    # TODO: put calibrating state
+    turret.calibrate()
+    # TODO: put waiting state
     while True:
         try:
             state = desired_state_queue.get(block=False, timeout=0.1)
@@ -18,13 +21,15 @@ def turret_thread_target(desired_state_queue: Queue, actual_state_queue: Queue):
 
         pitch = state["state"]["pitch"]
         yaw = state["state"]["yaw"]
+        mode = state["state"]["mode"]
+        control = state["state"]["control"]
         turret.move(pitch, yaw)
         new_state = map_state(
             pitch=turret.pitch,
             yaw=turret.yaw_motor,
-            ammo=22,
-            control=state["state"]["control"],
-            mode=state["state"]["mode"]
+            ammo=22, # TODO Update ammo count
+            control=control,
+            mode=mode
         )
         actual_state_queue.put(new_state)
 
@@ -33,7 +38,7 @@ def shadow_client_thread_target(desired_state_queue: Queue, actual_state_queue: 
     shadow_client = TurretShadowClient()
 
     def shadow_updated(payload, responseStatus, token):
-        print("Payload Received: ")
+        print("Payload Reported: ")
         print(payload)
         print("--------------\n\n")
 
