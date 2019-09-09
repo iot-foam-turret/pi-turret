@@ -11,10 +11,16 @@ LEFT = "LEFT"
 RIGHT = "RIGHT"
 FIRE = "FIRE"
 
+THREAD_STOP = False
+
 def turret_thread(tQueue):
+    global THREAD_STOP
     turret = Turret()
     # turret.calibrate()
     while True:
+        if THREAD_STOP:
+            turret = None
+            break
         try:
             command = tQueue.get(block=False, timeout= 0.1)
         except Queue.Empty:
@@ -50,11 +56,12 @@ def main():
 
     # map arrow keys to special values
     screen.keypad(True)
-
+    global THREAD_STOP
     try:
         while True:
             char = screen.getch()
             if char == ord('q'):
+                THREAD_STOP = True
                 break
             elif char == curses.KEY_RIGHT:
                 # print doesn't work with curses, use addstr instead
