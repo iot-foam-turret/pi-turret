@@ -7,6 +7,7 @@ from pi_turret.turret import Turret
 
 def turret_thread_target(desired_state_queue: Queue, actual_state_queue: Queue):
     turret = Turret()
+    turret.calibrate()
     while True:
         try:
             state = desired_state_queue.get(block=False, timeout=0.1)
