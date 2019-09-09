@@ -105,3 +105,4 @@ venv.bak/
 
 # AWS IoT
 pi_turret/iot/.device_cert/*
+.vscode/settings.json
