@@ -2,6 +2,7 @@
 import sys
 import getopt
 from pi_turret.test_scripts.keyboard_control import main as keyboard_main
+from pi_turret.iot.runner import main as iot_main
 
 
 def main():
@@ -12,6 +13,10 @@ def main():
         opts, _ = getopt.getopt(sys.argv[1:], "hc:", "controls=")
     except getopt.GetoptError:
         print("Error getting options")
+
+    if len(opts) is 0:
+        print("IoT Turret")
+        iot_main()
 
     for opt, arg in opts:
         if opt == "-h":
@@ -24,8 +29,8 @@ def main():
                 print("Use Keyboard")
                 keyboard_main()
             elif arg == "iot":
-                print("IoT Not Implemented")
-                sys.exit()
+                print("IoT Turret")
+                iot_main()
 
 
 if __name__ == "__main__":

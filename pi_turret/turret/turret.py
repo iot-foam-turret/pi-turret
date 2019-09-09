@@ -1,7 +1,8 @@
 """Main Blaster Turret
 """
+import time
 from pi_turret.blaster.hyperfire import Hyperfire
-from pi_turret.stepper_motor.stepper import StepperMotor
+from pi_turret.stepper_motor.stepper import StepperMotor, STEP_DEGREES
 from pi_turret.stepper_motor.stepper_slot import StepperMotorSlot
 from pi_turret.sensor.button import yaw_button, pitch_button
 
@@ -13,6 +14,8 @@ class Turret:
         self.blaster = Hyperfire()
         self.pitch_motor = StepperMotor(StepperMotorSlot.STEPPER_TWO)
         self.yaw_motor = StepperMotor(StepperMotorSlot.STEPPER_ONE)
+        self.pitch = None
+        self.yaw = None
 
     def calibrate(self):
         """Calibrate the position of the stepper motors
@@ -28,6 +31,35 @@ class Turret:
             self.move_up()
         for _ in range(21):
             self.move_down()
+
+        self.pitch = 0
+        self.yaw = 0
+
+    def move(self, pitch: float, yaw: float):
+        move_pitch = pitch - self.pitch
+        move_yaw = yaw - self.yaw
+
+        while move_pitch is not 0 or move_yaw is not 0:
+            if move_pitch > 0:
+                self.pitch_motor.one_step_backwards()
+                move_pitch -= STEP_DEGREES
+            elif move_pitch < 0:
+                self.pitch_motor.one_step_forward()
+                move_pitch += STEP_DEGREES
+            if abs(move_pitch) < (STEP_DEGREES / 2):
+                move_pitch = 0
+
+            if move_yaw > 0:
+                self.yaw_motor.one_step_backwards()
+                move_yaw -= STEP_DEGREES
+            elif move_pitch < 0:
+                self.yaw_motor.one_step_forward()
+                move_yaw += STEP_DEGREES
+            if abs(move_yaw) < (STEP_DEGREES / 2):
+                move_yaw = 0
+
+            time.sleep(0.02)
+
 
     def move_up(self):
         """Move up one step

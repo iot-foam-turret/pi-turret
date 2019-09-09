@@ -1,11 +1,9 @@
 """Module for testing the turret with the keyboard controls"""
 import curses
 import threading
+import time
 import queue as Queue
-try:
-    from pi_turret.turret.turret import Turret
-except ImportError:
-    from pi_turret.turret.mock_turret import Turret
+from pi_turret.turret import Turret
 
 UP = "UP"
 DOWN = "DOWN"
@@ -20,6 +18,8 @@ def turret_thread(tQueue):
         try:
             command = tQueue.get(block=False, timeout= 0.1)
         except Queue.Empty:
+            # Don't peg the CPU
+            time.sleep(0.02)
             continue
         if command == UP:
             turret.move_up()

@@ -33,12 +33,24 @@ class StepperMotor:
             time.sleep(0.02)
 
 
+    def one_step_forward(self):
+        """Moves the motor forward
+        """
+        return self.motor.onestep(direction=stepper.FORWARD, style=stepper.DOUBLE)
+
+
     def step_backward(self, degrees=STEP_DEGREES):
         """Converts the given degrees to steps and moves the motor backward
         """
         for _ in range(round(degrees/STEP_DEGREES)):
             self.position = self.motor.onestep(direction=stepper.BACKWARD, style=stepper.DOUBLE)
             time.sleep(0.02)
+
+
+    def one_step_backwards(self):
+        """Moves the motor backwards
+        """
+        return self.motor.onestep(direction=stepper.BACKWARD, style=stepper.DOUBLE)
 
 
     def test(self):
