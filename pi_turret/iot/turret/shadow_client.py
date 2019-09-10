@@ -5,14 +5,16 @@ import json
 from pi_turret.iot.turret.control import Control
 from pi_turret.iot.turret.mode import Mode
 
-def map_state(pitch: float, yaw: float, ammo: int, control: Control, mode: Mode):
+
+def map_state(pitch: float, yaw: float, ammo: int, control: Control = Control.manual, mode: Mode = Mode.waiting):
     return {
         "pitch": pitch,
         "yaw": yaw,
         "ammo": ammo,
-        "control": control.value,
-        "mode": mode.value
+        "control": control.value if control is not None else Control.manual.value,
+        "mode": mode.value if mode is not None else Mode.waiting.value
     }
+
 
 class TurretShadowClient:
     """

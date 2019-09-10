@@ -1,5 +1,6 @@
 import threading
 import time
+import json
 from queue import Queue, Empty
 from pi_turret.iot.turret.shadow_client import TurretShadowClient, map_state
 from pi_turret.turret import Turret
@@ -18,15 +19,17 @@ def turret_thread_target(desired_state_queue: Queue, actual_state_queue: Queue):
             time.sleep(0.02)
             continue
         print(state)
-
-        pitch = state["state"]["pitch"]
-        yaw = state["state"]["yaw"]
-        mode = state["state"]["mode"]
-        control = state["state"]["control"]
+        stateDict = state.get("state")
+        if stateDict is None:
+            continue
+        pitch = stateDict.get("pitch", turret.pitch)
+        yaw = stateDict.get("yaw", turret.yaw)
+        mode = stateDict.get("mode")
+        control = stateDict.get("control")
         turret.move(pitch, yaw)
         new_state = map_state(
             pitch=turret.pitch,
-            yaw=turret.yaw_motor,
+            yaw=turret.yaw,
             ammo=22, # TODO Update ammo count
             control=control,
             mode=mode
@@ -44,7 +47,8 @@ def shadow_client_thread_target(desired_state_queue: Queue, actual_state_queue: 
 
     def shadow_delta_callback(payload, responseStatus, token):
         print("Payload Received: ")
-        desired_state_queue.put(payload)
+        payloadDictionary = json.loads(payload)
+        desired_state_queue.put(payloadDictionary)
 
     shadow_client.subscribe(shadow_delta_callback)
 
