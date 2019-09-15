@@ -3,7 +3,7 @@ import time
 import json
 from queue import Queue, Empty
 from pi_turret.iot.turret.shadow_client import TurretShadowClient, map_state
-from pi_turret.turret import Turret
+from pi_turret.turret import Turret, Mode
 
 
 def turret_thread_target(desired_state_queue: Queue, actual_state_queue: Queue):
@@ -26,13 +26,30 @@ def turret_thread_target(desired_state_queue: Queue, actual_state_queue: Queue):
         yaw = stateDict.get("yaw", turret.yaw)
         mode = stateDict.get("mode")
         control = stateDict.get("control")
+
+
+        # Begin firing before movement so flywheel rev up time isn't wasted
+        if mode is Mode.firing.value and turret.mode is not Mode.firing and turret.mode is not Mode.empty:
+            def fire_callback():
+                fire_complete_state = map_state(
+                    pitch=turret.pitch,
+                    yaw=turret.yaw,
+                    ammo=turret.ammo,
+                    control=control,
+                    mode=turret.mode.value
+                )
+                actual_state_queue.put(fire_complete_state)
+
+
+            turret.burst_fire(0.5, fire_callback)
+
         turret.move(pitch, yaw)
         new_state = map_state(
             pitch=turret.pitch,
             yaw=turret.yaw,
-            ammo=22, # TODO Update ammo count
+            ammo=turret.ammo,
             control=control,
-            mode=mode
+            mode=turret.mode.value
         )
         actual_state_queue.put(new_state)
 

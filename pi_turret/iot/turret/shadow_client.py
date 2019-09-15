@@ -3,7 +3,7 @@ import logging
 import time
 import json
 from pi_turret.iot.turret.control import Control
-from pi_turret.iot.turret.mode import Mode
+from pi_turret.turret.mode import Mode
 
 
 def map_state(pitch: float, yaw: float, ammo: int, control: Control = Control.manual, mode: Mode = Mode.waiting):

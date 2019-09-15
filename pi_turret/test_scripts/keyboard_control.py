@@ -36,7 +36,8 @@ def turret_thread(tQueue):
         elif command == RIGHT:
             turret.move_right()
         elif command == FIRE:
-            turret.blaster.burst_fire(0.5)
+            turret.burst_fire(0.5)
+            # turret.blaster.burst_fire(0.5)
 
 def main():
     """Main script to control the turret with the keyboard
