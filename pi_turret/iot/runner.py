@@ -14,10 +14,8 @@ def turret_thread_target(desired_state_queue: Queue, actual_state_queue: Queue):
         pitch=turret.pitch,
         yaw=turret.yaw,
         ammo=turret.ammo,
-        control=control,
         mode=turret.mode
     ))
-    # TODO: put waiting state
     while True:
         try:
             state = desired_state_queue.get(block=True, timeout=0.1)
@@ -25,7 +23,6 @@ def turret_thread_target(desired_state_queue: Queue, actual_state_queue: Queue):
             # Don't peg the CPU
             time.sleep(0.02)
             continue
-        print(state)
         if state == "CLOSE":
             break
         stateDict = state.get("state")
@@ -37,14 +34,14 @@ def turret_thread_target(desired_state_queue: Queue, actual_state_queue: Queue):
         control = stateDict.get("control")
 
         # Begin firing before movement so flywheel rev up time isn't wasted
-        if mode is Mode.firing.value and turret.mode is not Mode.firing and turret.mode is not Mode.empty:
+        if mode == Mode.firing.value and turret.mode != Mode.firing and turret.mode != Mode.empty:
             def fire_callback():
                 fire_complete_state = map_state(
                     pitch=turret.pitch,
                     yaw=turret.yaw,
                     ammo=turret.ammo,
                     control=control,
-                    mode=turret.mode.value
+                    mode=turret.mode
                 )
                 actual_state_queue.put(fire_complete_state)
 
@@ -56,7 +53,7 @@ def turret_thread_target(desired_state_queue: Queue, actual_state_queue: Queue):
             yaw=turret.yaw,
             ammo=turret.ammo,
             control=control,
-            mode=turret.mode.value
+            mode=turret.mode
         )
         actual_state_queue.put(new_state)
 
@@ -67,24 +64,31 @@ def shadow_client_thread_target(desired_state_queue: Queue, actual_state_queue: 
     def shadow_updated(payload, responseStatus, token):
         print("Payload Reported: ")
         print(payload)
-        print("--------------\n\n")
+        print("--------------\n")
 
     def shadow_delta_callback(payload, responseStatus, token):
         print("Payload Received: ")
+        print(payload)
+        print("--------------\n")
         payloadDictionary = json.loads(payload)
         desired_state_queue.put(payloadDictionary, block=False)
 
-    shadow_client.subscribe(shadow_delta_callback)
+    def connect_shadow(payload, responseStatus, token):
+        print("Shadow Reset: ")
+        print(payload)
+        print("--------------\n")
+        shadow_client.subscribe(shadow_delta_callback)
 
-    while True:
-        try:
-            state = actual_state_queue.get(block=False, timeout=0.1)
-        except Empty:
-            # Don't peg the CPU
-            time.sleep(0.02)
-            continue
-        print(state)
-        shadow_client.update_shadow(state, shadow_updated)
+        while True:
+            try:
+                state = actual_state_queue.get(block=False, timeout=0.1)
+            except Empty:
+                # Don't peg the CPU
+                time.sleep(0.02)
+                continue
+            shadow_client.update_shadow(state, shadow_updated)
+
+    shadow_client.reset_shadow(connect_shadow)
 
 
 def main():

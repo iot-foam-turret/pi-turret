@@ -48,12 +48,22 @@ class TurretShadowClient:
     def get_shadow(self, callback):
         self.shadowHandler.shadowGet(callback, 5)
 
+
+    def reset_shadow(self, callback):
+        self.shadowHandler.shadowDelete(callback, 5)
+
+
     def update_shadow(self, state, callback):
         data = {
             "state": {
                 "reported": state
             }
         }
+
+        if state["mode"] == Mode.waiting.value:
+            data["state"]["desired"] = {
+                "mode": Mode.waiting.value
+            }
 
         payload = json.dumps(data)
 
