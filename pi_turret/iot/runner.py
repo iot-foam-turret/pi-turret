@@ -27,7 +27,6 @@ def turret_thread_target(desired_state_queue: Queue, actual_state_queue: Queue):
         mode = stateDict.get("mode")
         control = stateDict.get("control")
 
-
         # Begin firing before movement so flywheel rev up time isn't wasted
         if mode is Mode.firing.value and turret.mode is not Mode.firing and turret.mode is not Mode.empty:
             def fire_callback():
@@ -39,7 +38,6 @@ def turret_thread_target(desired_state_queue: Queue, actual_state_queue: Queue):
                     mode=turret.mode.value
                 )
                 actual_state_queue.put(fire_complete_state)
-
 
             turret.burst_fire(0.5, fire_callback)
 
@@ -84,10 +82,12 @@ def main():
     desired_state_queue = Queue()
     actual_state_queue = Queue()
 
-    turret_thread = threading.Thread(target=turret_thread_target, args=(desired_state_queue, actual_state_queue), daemon=True)
+    turret_thread = threading.Thread(target=turret_thread_target, args=(
+        desired_state_queue, actual_state_queue), daemon=True)
     turret_thread.start()
 
-    shadow_client_thread = threading.Thread(target=shadow_client_thread_target, args=(desired_state_queue, actual_state_queue), daemon=True)
+    shadow_client_thread = threading.Thread(target=shadow_client_thread_target, args=(
+        desired_state_queue, actual_state_queue), daemon=True)
     shadow_client_thread.start()
 
     # Not sure if we need the main thread to do anything
