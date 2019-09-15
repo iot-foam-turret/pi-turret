@@ -1,6 +1,6 @@
 """Mock Turret that can be used when developing not on a Raspberry Pi
 """
-
+from typing import Callable
 
 class Turret:
     """Mock Turret that can be used when developing not on a Raspberry Pi
@@ -25,6 +25,13 @@ class Turret:
         """
         self.pitch = pitch
         self.yaw = yaw
+
+
+    def burst_fire(self, duration: float, completion: Callable=None):
+        """
+        Burst Fire
+        """
+
 
     def move_up(self):
         """Move up one step
