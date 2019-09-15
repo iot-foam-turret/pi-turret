@@ -11,13 +11,12 @@ from pi_turret.sensor.button import yaw_button, pitch_button
 from pi_turret.turret.mode import Mode
 
 
-
 class Turret:
     """
     Turret that can move left/right and up/down
     """
 
-    yaw_max = 90
+    yaw_max = 90 # Maybe need to cut this in half
     pitch_max = 27
     darts_per_second = 8
 
@@ -25,8 +24,8 @@ class Turret:
         self.blaster = Hyperfire()
         self.pitch_motor = StepperMotor(StepperMotorSlot.STEPPER_TWO)
         self.yaw_motor = StepperMotor(StepperMotorSlot.STEPPER_ONE)
-        self.pitch = 0
-        self.yaw = 0
+        self.pitch = 0.0
+        self.yaw = 0.0
         self.ammo = 22
         self.mode = Mode.waiting
 
@@ -47,8 +46,8 @@ class Turret:
         for _ in range(21):
             self.move_down()
 
-        self.pitch = 0
-        self.yaw = 0
+        self.pitch = 0.0
+        self.yaw = 0.0
         self.mode = Mode.waiting
 
     def burst_fire(self, duration: float, completion: Callable = None):
@@ -73,8 +72,10 @@ class Turret:
         move_pitch = pitch - self.pitch
         move_yaw = yaw - self.yaw
 
-        while move_pitch is not 0 or move_yaw is not 0:
+        while move_pitch != 0 or move_yaw != 0:
             if (move_pitch > 0 and move_pitch < (STEP_DEGREES / 2)) or (move_pitch < 0 and -move_pitch < (STEP_DEGREES / 2)):
+                move_pitch = 0
+            if self.pitch_stop():
                 move_pitch = 0
             if move_pitch > 0:
                 self.pitch_motor.one_step_backwards()
@@ -84,10 +85,10 @@ class Turret:
                 self.pitch_motor.one_step_forward()
                 self.pitch -= STEP_DEGREES
                 move_pitch += STEP_DEGREES
-            if self.pitch_stop():
-                move_pitch = 0
 
             if (move_yaw > 0 and move_yaw < (STEP_DEGREES / 2)) or (move_yaw < 0 and -move_yaw < (STEP_DEGREES / 2)):
+                move_yaw = 0
+            if self.yaw_stop():
                 move_yaw = 0
             if move_yaw > 0:
                 self.yaw_motor.one_step_forward()
@@ -97,8 +98,6 @@ class Turret:
                 self.yaw_motor.one_step_backwards()
                 self.yaw -= STEP_DEGREES
                 move_yaw += STEP_DEGREES
-            if self.yaw_stop():
-                move_yaw = 0
 
             time.sleep(0.02)
 
