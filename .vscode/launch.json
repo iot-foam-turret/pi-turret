@@ -21,6 +21,12 @@
             "type": "python",
             "request": "launch",
             "module": "pi_turret.test_scripts.motion_tracking"
+        },
+        {
+            "name": "Face Tracking",
+            "type": "python",
+            "request": "launch",
+            "module": "pi_turret.test_scripts.face_tracking"
         }
     ]
 }
