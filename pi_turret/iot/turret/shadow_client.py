@@ -1,17 +1,19 @@
-from AWSIoTPythonSDK.MQTTLib import AWSIoTMQTTShadowClient
-import logging
+"""
+shadow_client
+"""
 import time
 import json
+from AWSIoTPythonSDK.MQTTLib import AWSIoTMQTTShadowClient
 from pi_turret.iot.turret.control import Control
 from pi_turret.turret.mode import Mode
 
 
-def map_state(pitch: float, yaw: float, ammo: int, control: Control = Control.manual, mode: Mode = Mode.waiting):
+def map_state(pitch: float, yaw: float, ammo: int = 22, control: Control = Control.faceId, mode: Mode = Mode.waiting):
     return {
         "pitch": pitch,
         "yaw": yaw,
         "ammo": ammo,
-        "control": control.value if control is not None else Control.manual.value,
+        "control": control.value if control is not None else Control.faceId.value,
         "mode": mode.value if mode is not None else Mode.waiting.value
     }
 
@@ -22,12 +24,12 @@ class TurretShadowClient:
     """
 
     def __init__(
-        self,
-        clientId="Pi-Turret",
-        host="a1ele7j1b00m5f-ats.iot.us-west-2.amazonaws.com",
-        rootCAPath="pi_turret/iot/.device_cert/root-CA.crt",
-        privateKeyPath="pi_turret/iot/.device_cert/91fe20c098-private.pem.key",
-        certificatePath="pi_turret/iot/.device_cert/91fe20c098-certificate.pem.crt"
+            self,
+            clientId="Pi-Turret",
+            host="a1ele7j1b00m5f-ats.iot.us-west-2.amazonaws.com",
+            rootCAPath="pi_turret/iot/.device_cert/root-CA.crt",
+            privateKeyPath="pi_turret/iot/.device_cert/91fe20c098-private.pem.key",
+            certificatePath="pi_turret/iot/.device_cert/91fe20c098-certificate.pem.crt"
     ):
         shadowClient = AWSIoTMQTTShadowClient(clientId)
         shadowClient.configureEndpoint(host, 8883)

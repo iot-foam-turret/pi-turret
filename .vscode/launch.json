@@ -27,6 +27,12 @@
             "type": "python",
             "request": "launch",
             "module": "pi_turret.test_scripts.face_tracking"
+        },
+        {
+            "name": "Combo Tracking",
+            "type": "python",
+            "request": "launch",
+            "module": "pi_turret.test_scripts.combo_tracking"
         }
     ]
 }

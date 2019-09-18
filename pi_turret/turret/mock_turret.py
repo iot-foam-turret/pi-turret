@@ -1,6 +1,7 @@
 """Mock Turret that can be used when developing not on a Raspberry Pi
 """
 from typing import Callable
+from pi_turret.turret.mode import Mode
 
 class Turret:
     """Mock Turret that can be used when developing not on a Raspberry Pi
@@ -12,6 +13,8 @@ class Turret:
         self.yaw_motor = None
         self.pitch = 0
         self.yaw = 0
+        self.ammo = 22
+        self.mode = Mode.waiting
 
     def calibrate(self):
         """Calibrate the position of the stepper motors
@@ -31,7 +34,7 @@ class Turret:
         """
         Burst Fire
         """
-
+        self.ammo = self.ammo - 22
 
     def move_up(self):
         """Move up one step

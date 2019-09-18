@@ -34,7 +34,8 @@ def handle_new_frame(frame, past_frame, min_area):
     _, thresh = cv2.threshold(frame_delta, 50, 255, cv2.THRESH_BINARY)
     # dilate the thresholded image to fill in holes, then find contours on thresholded image
     thresh = cv2.dilate(thresh, None, iterations=2)
-    cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    cnts = cv2.findContours(
+        thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     contours = cnts[0] if len(cnts) is 2 else cnts[1]
 
     motion = []
@@ -44,12 +45,12 @@ def handle_new_frame(frame, past_frame, min_area):
         area = cv2.contourArea(c)
         if area < min_area or area > (h * w) / 2:
             continue
-        print(f"Motion detected! {area}")
+        # print(f"Motion detected! {area}")
         motion.append(c)
-    return None, motion
+    return gray, motion
 
 
-def test_motion_tracking():
+def test_motion_tracking(output_filename=None, show_ui=False):
     """Testing motion tracking"""
     # Motion detection sensitivity
     min_area = 300
@@ -60,7 +61,10 @@ def test_motion_tracking():
         frames = 0
         start = time.time()
         frame_source = WebcamFrames()
-        # out = cv2.VideoWriter("video.mp4", cv2.VideoWriter_fourcc(*'MP4V'), 10, (1280, 720))
+        out = None
+        if output_filename is not None:
+            out = cv2.VideoWriter(
+                f"{output_filename}.mp4", cv2.VideoWriter_fourcc(*'MP4V'), 10, (1280, 720))
         for frame in frame_source:
             frames += 1
             new_past_frame, motion = handle_new_frame(
@@ -69,21 +73,26 @@ def test_motion_tracking():
                 for c in motion:
                     (x, y, w, h) = cv2.boundingRect(c)
                     print(f"Motion Bounds: x: {x} y: {y} w:{w} h:{h}")
-                    cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-            # out.write(frame)
-            
+                    cv2.rectangle(frame, (x, y), (x + w, y + h),
+                                  (0, 255, 0), 2)
+            if output_filename is not None:
+                out.write(frame)
+
             past_frame = new_past_frame
-            # rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2BGRA)
-            # cv2.imshow('frame', rgb)
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
+            if show_ui:
+                rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2BGRA)
+                cv2.imshow('frame', rgb)
+                if cv2.waitKey(1) & 0xFF == ord('q'):
+                    break
     finally:
         print("Exiting")
-        # out.release()
+        if out is not None:
+            out.release()
         cv2.destroyAllWindows()
         end = time.time()
         fps = frames / (end - start)
         print(f"Estimated fps: {fps}")
 
+
 if __name__ == '__main__':
-    test_motion_tracking()
+    test_motion_tracking(show_ui=True)

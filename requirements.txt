@@ -7,3 +7,5 @@ picamera
 imutils
 pylint
 AWSIoTPythonSDK
+boto3
+Pillow

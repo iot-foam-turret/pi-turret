@@ -3,7 +3,9 @@ import time
 import json
 from queue import Queue, Empty
 from pi_turret.iot.turret.shadow_client import TurretShadowClient, map_state
+from pi_turret.iot.turret.control import Control
 from pi_turret.turret import Turret, Mode
+from pi_turret.test_scripts.combo_tracking import combo_tracking
 
 
 def turret_thread_target(desired_state_queue: Queue, actual_state_queue: Queue):
@@ -16,6 +18,17 @@ def turret_thread_target(desired_state_queue: Queue, actual_state_queue: Queue):
         ammo=turret.ammo,
         mode=turret.mode
     ))
+    auto_turret_thread = None
+    stop_event = None
+    def set_face_id_thread():
+        stop_event = threading.Event()
+        auto_turret_thread = threading.Thread(
+            target=combo_tracking_target,
+            args=(desired_state_queue, turret, stop_event),
+            daemon=True
+        )
+        auto_turret_thread.start()
+    set_face_id_thread()
     while True:
         try:
             state = desired_state_queue.get(block=True, timeout=0.1)
@@ -25,13 +38,22 @@ def turret_thread_target(desired_state_queue: Queue, actual_state_queue: Queue):
             continue
         if state == "CLOSE":
             break
-        stateDict = state.get("state")
-        if stateDict is None:
+        state_dict = state.get("state")
+        if state_dict is None:
             continue
-        pitch = stateDict.get("pitch", turret.pitch)
-        yaw = stateDict.get("yaw", turret.yaw)
-        mode = stateDict.get("mode")
-        control = stateDict.get("control")
+        pitch = state_dict.get("pitch", turret.pitch)
+        yaw = state_dict.get("yaw", turret.yaw)
+        mode = state_dict.get("mode")
+        control = state_dict.get("control")
+
+        if mode == Control.faceId.value:
+            if not auto_turret_thread:
+                set_face_id_thread()
+            continue
+
+        if auto_turret_thread and not stop_event.is_set():
+            # Close the thread
+            stop_event.set()
 
         # Begin firing before movement so flywheel rev up time isn't wasted
         if mode == Mode.firing.value and turret.mode != Mode.firing and turret.mode != Mode.empty:
@@ -40,7 +62,7 @@ def turret_thread_target(desired_state_queue: Queue, actual_state_queue: Queue):
                     pitch=turret.pitch,
                     yaw=turret.yaw,
                     ammo=turret.ammo,
-                    control=control,
+                    control=Control[control],
                     mode=turret.mode
                 )
                 actual_state_queue.put(fire_complete_state)
@@ -52,10 +74,28 @@ def turret_thread_target(desired_state_queue: Queue, actual_state_queue: Queue):
             pitch=turret.pitch,
             yaw=turret.yaw,
             ammo=turret.ammo,
-            control=control,
+            control=Control[control],
             mode=turret.mode
         )
         actual_state_queue.put(new_state)
+
+
+def combo_tracking_target(desired_state_queue: Queue, turret: Turret, stop_event):
+    """
+    combo_tracking_target
+    """
+    def callback(face_x, face_y):
+        # TODO Map
+        pitch = turret.pitch + face_y
+        yaw = turret.yaw + face_x
+        new_state = map_state(
+            pitch=pitch,
+            yaw=yaw,
+            control=Control.faceId,
+            mode=Mode.firing
+        )
+        desired_state_queue.put(new_state)
+    combo_tracking(stop_event, callback=callback)
 
 
 def shadow_client_thread_target(desired_state_queue: Queue, actual_state_queue: Queue):
