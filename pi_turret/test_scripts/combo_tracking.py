@@ -52,7 +52,9 @@ def compare_faces(client, source_image, target_image=None, target_key='public/bo
         left = str(position['Left'])
         top = str(position['Top'])
         print(f'The face at {left} {top} matches with {confidence}% confidence {time.time()}')
-    return response
+        if float(confidence) > 90:
+            return position
+    return None
 
 
 def combo_tracking(stop_event, output_filename=None, show_ui=False, min_area=300, callback=None):
@@ -86,13 +88,15 @@ def combo_tracking(stop_event, output_filename=None, show_ui=False, min_area=300
                     # Send frame to be checked
                     if new_past_frame is not None and new_past_frame.any() \
                         and cooldown_timestamp + 3 < time.time():
+                        print("Comparing faces")
                         result = compare_faces(client, new_past_frame)
                         cooldown_timestamp = time.time()
                         # TODO map result
-                        face_x = 0
-                        face_y = 0
-                        if callback is not None:
-                            callback(face_x, face_y)
+                        if result:
+                            face_x = result['Left'] * config.CAMERA_WIDTH
+                            face_y = result['Top'] * config.CAMERA_HEIGHT
+                            if callback is not None:
+                                callback(face_x, face_y)
                    
                     # pylint: disable=invalid-name
                     if show_ui:

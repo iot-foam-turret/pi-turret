@@ -11,7 +11,7 @@ from pi_turret.test_scripts.combo_tracking import combo_tracking
 def turret_thread_target(desired_state_queue: Queue, actual_state_queue: Queue):
     turret = Turret()
     # TODO: put calibrating state
-    turret.calibrate()
+    # turret.calibrate()
     actual_state_queue.put(map_state(
         pitch=turret.pitch,
         yaw=turret.yaw,
@@ -54,6 +54,7 @@ def turret_thread_target(desired_state_queue: Queue, actual_state_queue: Queue):
         if auto_turret_thread and not stop_event.is_set():
             # Close the thread
             stop_event.set()
+            auto_turret_thread = None
 
         # Begin firing before movement so flywheel rev up time isn't wasted
         if mode == Mode.firing.value and turret.mode != Mode.firing and turret.mode != Mode.empty:
@@ -62,7 +63,7 @@ def turret_thread_target(desired_state_queue: Queue, actual_state_queue: Queue):
                     pitch=turret.pitch,
                     yaw=turret.yaw,
                     ammo=turret.ammo,
-                    control=Control[control],
+                    control=Control(control),
                     mode=turret.mode
                 )
                 actual_state_queue.put(fire_complete_state)
@@ -74,7 +75,7 @@ def turret_thread_target(desired_state_queue: Queue, actual_state_queue: Queue):
             pitch=turret.pitch,
             yaw=turret.yaw,
             ammo=turret.ammo,
-            control=Control[control],
+            control=Control(control),
             mode=turret.mode
         )
         actual_state_queue.put(new_state)
@@ -86,15 +87,22 @@ def combo_tracking_target(desired_state_queue: Queue, turret: Turret, stop_event
     """
     def callback(face_x, face_y):
         # TODO Map
-        pitch = turret.pitch + face_y
-        yaw = turret.yaw + face_x
+        # Camera x to view angle
+        # y = 0.0421875x -27
+
+        # Camera y to view angle
+        # y = -0.05694444444x + 20.5
+        pitch = -0.05694444444 * face_y + 20.5 #turret.pitch + face_y
+        yaw = 0.0421875 * face_x -27 #turret.yaw + face_x
         new_state = map_state(
             pitch=pitch,
-            yaw=yaw,
+            yaw=-yaw,
             control=Control.faceId,
             mode=Mode.firing
         )
-        desired_state_queue.put(new_state)
+        desired_state_queue.put({
+            "state": new_state
+        })
     combo_tracking(stop_event, callback=callback)
 
 
