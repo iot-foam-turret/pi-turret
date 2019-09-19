@@ -4,13 +4,14 @@ import io
 import numpy as np
 import picamera
 import time
+import pi_turret.config as config
 from pi_turret.camera.preview import preview
 
 
 class PiCamFrames:
     """Iterator that loops over frames from PiCamera."""
 
-    def __init__(self, resolution=(640, 480)):
+    def __init__(self, resolution=config.CAMERA_RESOLUTION):
         self.camera = picamera.PiCamera()
         self.camera.resolution = resolution
 

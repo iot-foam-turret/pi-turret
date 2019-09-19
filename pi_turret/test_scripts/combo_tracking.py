@@ -6,6 +6,7 @@ import time
 import cv2
 import threading
 import boto3
+import pi_turret.config as config
 from PIL import Image
 from pi_turret.camera.webcam_frames import WebcamFrames
 from pi_turret.test_scripts.face_tracking import Tracker, haarFacePath
@@ -68,7 +69,7 @@ def combo_tracking(stop_event, output_filename=None, show_ui=False, min_area=300
         out = None
         if output_filename is not None:
             out = cv2.VideoWriter(
-                f"{output_filename}.avi", cv2.VideoWriter_fourcc(*"H264"), 10, (640, 480))
+                f"{output_filename}.avi", cv2.VideoWriter_fourcc(*"H264"), 10, config.CAMERA_RESOLUTION)
 
         past_frame = None
         cooldown_timestamp = time.time()

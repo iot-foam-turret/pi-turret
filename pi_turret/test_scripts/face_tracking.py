@@ -2,6 +2,7 @@
 import time
 import os.path
 import cv2
+import pi_turret.config as config
 from pi_turret.camera.webcam_frames import WebcamFrames
 
 # pylint: disable=invalid-name
@@ -97,7 +98,7 @@ def test_tracking(output_filename=None, show_ui=False):
         start = time.time()
         if output_filename is not None:
             out = cv2.VideoWriter(
-                f"{output_filename}.avi", cv2.VideoWriter_fourcc(*'H264'), 10, (640, 480))
+                f"{output_filename}.avi", cv2.VideoWriter_fourcc(*'H264'), 10, config.CAMERA_RESOLUTION)
         tracked = []
         skipped_frames = 0
         id_generator = tracked_id()
@@ -141,4 +142,4 @@ def test_tracking(output_filename=None, show_ui=False):
 
 
 if __name__ == '__main__':
-    test_tracking(output_filename="test-face-tracking", show_ui=True)
+    test_tracking(output_filename="test-face-tracking", show_ui=False)
