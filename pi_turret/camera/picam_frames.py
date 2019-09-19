@@ -3,6 +3,7 @@ import cv2
 import io
 import numpy as np
 import picamera
+import time
 from pi_turret.camera.preview import preview
 
 
@@ -35,3 +36,9 @@ class PiCamFrames:
 
 if __name__ == "__main__":
     preview(PiCamFrames())
+    # camera = picamera.PiCamera()
+    # camera.start_preview()
+    # camera.start_recording('/home/pi/Desktop/video.h264')
+    # time.sleep(5)
+    # camera.stop_recording()
+    # camera.stop_preview()

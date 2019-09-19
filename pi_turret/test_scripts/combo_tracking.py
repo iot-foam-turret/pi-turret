@@ -68,7 +68,7 @@ def combo_tracking(stop_event, output_filename=None, show_ui=False, min_area=300
         out = None
         if output_filename is not None:
             out = cv2.VideoWriter(
-                f"{output_filename}.mp4", cv2.VideoWriter_fourcc(*'MP4V'), 10, (1280, 720))
+                f"{output_filename}.avi", cv2.VideoWriter_fourcc(*"H264"), 10, (640, 480))
 
         past_frame = None
         cooldown_timestamp = time.time()
@@ -126,4 +126,4 @@ def combo_tracking(stop_event, output_filename=None, show_ui=False, min_area=300
 if __name__ == "__main__":
     print("Combo Tracking")
     EVENT = threading.Event()
-    combo_tracking(EVENT, show_ui=True)
+    combo_tracking(EVENT, show_ui=True, output_filename="test-combo-tracking")

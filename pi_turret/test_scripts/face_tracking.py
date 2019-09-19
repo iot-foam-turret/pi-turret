@@ -6,13 +6,13 @@ from pi_turret.camera.webcam_frames import WebcamFrames
 
 # pylint: disable=invalid-name
 my_path = os.path.abspath(os.path.dirname(__file__))
-haarFacePath = os.path.join(my_path, "./haar_cascades/frontalface_default.xml")
+haarFacePath = os.path.join(my_path, "haar_cascades/frontalface_default.xml")
 haarProfilePath = os.path.join(
-    my_path, "./haar_cascades/haarcascade_profileface.xml")
+    my_path, "haar_cascades/haarcascade_profileface.xml")
 haarBodyPath = os.path.join(
-    my_path, "./haar_cascades/haarcascade_fullbody.xml")
+    my_path, "haar_cascades/haarcascade_fullbody.xml")
 haarUpperBodyPath = os.path.join(
-    my_path, "./haar_cascades/haarcascade_upperbody.xml")
+    my_path, "haar_cascades/haarcascade_upperbody.xml")
 
 
 def tracked_id():
@@ -97,7 +97,7 @@ def test_tracking(output_filename=None, show_ui=False):
         start = time.time()
         if output_filename is not None:
             out = cv2.VideoWriter(
-                f"{output_filename}.mp4", cv2.VideoWriter_fourcc(*'MP4V'), 10, (1280, 720))
+                f"{output_filename}.avi", cv2.VideoWriter_fourcc(*'H264'), 10, (640, 480))
         tracked = []
         skipped_frames = 0
         id_generator = tracked_id()

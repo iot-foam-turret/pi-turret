@@ -64,7 +64,7 @@ def test_motion_tracking(output_filename=None, show_ui=False):
         out = None
         if output_filename is not None:
             out = cv2.VideoWriter(
-                f"{output_filename}.mp4", cv2.VideoWriter_fourcc(*'MP4V'), 10, (1280, 720))
+                f"{output_filename}.avi", cv2.VideoWriter_fourcc(*'H264'), 10, (640, 480))
         for frame in frame_source:
             frames += 1
             new_past_frame, motion = handle_new_frame(
@@ -95,4 +95,4 @@ def test_motion_tracking(output_filename=None, show_ui=False):
 
 
 if __name__ == '__main__':
-    test_motion_tracking(show_ui=True)
+    test_motion_tracking(show_ui=False, output_filename="test-motion-tracking")
