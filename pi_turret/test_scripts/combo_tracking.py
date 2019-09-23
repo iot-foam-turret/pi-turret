@@ -25,33 +25,34 @@ def frame_to_bytes(frame):
     return bin_img
 
 
-def compare_faces(client, source_image, target_image=None, target_key='public/bolo'):
+def compare_faces(client, target_image, source_image=None, source_key='public/bolo'):
     """
-    Calls aws client's compare_faces with the target image or target key in S3 
+    Calls aws client's compare_faces with the source image or source key in S3 
     """
-    source_bytes = frame_to_bytes(source_image)
+    target_bytes = frame_to_bytes(target_image)
 
-    if target_image is not None:
-        target_bytes = frame_to_bytes(target_image)
-        target_image_payload = {'Bytes': target_bytes}
+    if source_image is not None:
+        target_bytes = frame_to_bytes(source_image)
+        source_image_payload = {'Bytes': source_image}
     else:
-        target_image_payload = {
+        source_image_payload = {
             'S3Object': {
                 'Bucket': 'foam-turret-bolos-dev',
-                'Name': target_key
+                'Name': source_key
             }
         }
 
     response = client.compare_faces(SimilarityThreshold=70,
-                                    SourceImage={'Bytes': source_bytes},
-                                    TargetImage=target_image_payload)
+                                    SourceImage=source_image_payload,
+                                    TargetImage={'Bytes': target_bytes})
 
     for face_match in response['FaceMatches']:
         position = face_match['Face']['BoundingBox']
         confidence = str(face_match['Face']['Confidence'])
         left = str(position['Left'])
         top = str(position['Top'])
-        print(f'The face at {left} {top} matches with {confidence}% confidence {time.time()}')
+        print(
+            f'The face at {left} {top} matches with {confidence}% confidence {time.time()}')
         if float(confidence) > 90:
             return position
     return None
@@ -71,7 +72,11 @@ def combo_tracking(stop_event, output_filename=None, show_ui=False, min_area=300
         out = None
         if output_filename is not None:
             out = cv2.VideoWriter(
-                f"{output_filename}.avi", cv2.VideoWriter_fourcc(*"H264"), 10, config.CAMERA_RESOLUTION)
+                f"{output_filename}.avi",
+                cv2.VideoWriter_fourcc(*"H264"),
+                10,
+                config.CAMERA_RESOLUTION
+            )
 
         past_frame = None
         cooldown_timestamp = time.time()
@@ -87,17 +92,16 @@ def combo_tracking(stop_event, output_filename=None, show_ui=False, min_area=300
                 if faces:
                     # Send frame to be checked
                     if new_past_frame is not None and new_past_frame.any() \
-                        and cooldown_timestamp + 3 < time.time():
+                            and cooldown_timestamp + 3 < time.time():
                         print("Comparing faces")
                         result = compare_faces(client, new_past_frame)
                         cooldown_timestamp = time.time()
-                        # TODO map result
                         if result:
                             face_x = result['Left'] * config.CAMERA_WIDTH
                             face_y = result['Top'] * config.CAMERA_HEIGHT
                             if callback is not None:
                                 callback(face_x, face_y)
-                   
+
                     # pylint: disable=invalid-name
                     if show_ui:
                         for c in faces:

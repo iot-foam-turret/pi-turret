@@ -1,4 +1,8 @@
-
+"""
+Config for constand values across the app
+"""
 CAMERA_WIDTH = 1280
 CAMERA_HEIGHT = 720
+# CAMERA_WIDTH = 1920
+# CAMERA_HEIGHT = 1080
 CAMERA_RESOLUTION = (CAMERA_WIDTH, CAMERA_HEIGHT)

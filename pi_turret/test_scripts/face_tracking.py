@@ -142,4 +142,4 @@ def test_tracking(output_filename=None, show_ui=False):
 
 
 if __name__ == '__main__':
-    test_tracking(output_filename="test-face-tracking", show_ui=False)
+    test_tracking(output_filename="test-face-tracking", show_ui=True)
