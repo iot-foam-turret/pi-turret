@@ -3,11 +3,13 @@ Testing combined tracking methods
 """
 import io
 import time
-import cv2
+from typing import Callable
 import threading
+import cv2
 import boto3
-import pi_turret.config as config
+from boto3_type_annotations.rekognition import Client
 from PIL import Image
+import pi_turret.config as config
 from pi_turret.camera.webcam_frames import WebcamFrames
 from pi_turret.test_scripts.face_tracking import Tracker, haarFacePath
 from pi_turret.test_scripts.motion_tracking import handle_new_frame
@@ -25,7 +27,7 @@ def frame_to_bytes(frame):
     return bin_img
 
 
-def compare_faces(client, target_image, source_image=None, source_key='public/bolo'):
+def compare_faces(client: Client, callback: Callable, target_image, source_image=None, source_key='public/bolo'):
     """
     Calls aws client's compare_faces with the source image or source key in S3 
     """
@@ -41,29 +43,35 @@ def compare_faces(client, target_image, source_image=None, source_key='public/bo
                 'Name': source_key
             }
         }
+    def compare_faces_target():
+        response = client.compare_faces(SimilarityThreshold=70,
+                                        SourceImage=source_image_payload,
+                                        TargetImage={'Bytes': target_bytes})
 
-    response = client.compare_faces(SimilarityThreshold=70,
-                                    SourceImage=source_image_payload,
-                                    TargetImage={'Bytes': target_bytes})
+        for face_match in response['FaceMatches']:
+            position = face_match['Face']['BoundingBox']
+            confidence = face_match['Face']['Confidence']
+            similarity = face_match['Similarity']
+            # left = str(position['Left'])
+            # top = str(position['Top'])
+            # print(f'The face at {left} {top} matches with {confidence}% confidence {time.time()}')
+            if confidence > 90 and similarity > 90:
+                callback(position)
+                return
+            callback(None)
 
-    for face_match in response['FaceMatches']:
-        position = face_match['Face']['BoundingBox']
-        confidence = str(face_match['Face']['Confidence'])
-        left = str(position['Left'])
-        top = str(position['Top'])
-        print(
-            f'The face at {left} {top} matches with {confidence}% confidence {time.time()}')
-        if float(confidence) > 90:
-            return position
-    return None
+    compare_faces_thread = threading.Thread(target=compare_faces_target, daemon=True)
+    compare_faces_thread.start()
 
+cooldown_timestamp = time.time()
+match = None
 
-def combo_tracking(stop_event, output_filename=None, show_ui=False, min_area=300, callback=None):
+def combo_tracking(stop_event, output_filename=None, show_ui=False, min_area=300, callback: Callable = None):
     """
     Use multiple tracking strategies to find a target
     """
     tracker = Tracker([haarFacePath])
-    client = boto3.client('rekognition')
+    client: Client = boto3.client('rekognition')
 
     try:
         frames = 0
@@ -79,43 +87,67 @@ def combo_tracking(stop_event, output_filename=None, show_ui=False, min_area=300
             )
 
         past_frame = None
-        cooldown_timestamp = time.time()
+        last_move = 0
         for frame in WebcamFrames():
             if stop_event.is_set():
                 break
             frames += 1
+            # start_detect_faces = time.time()
             new_past_frame, motion = handle_new_frame(
                 frame, past_frame, min_area)
 
+            faces = None
+
             if motion:
                 faces = tracker.detect_faces(frame)
-                if faces:
-                    # Send frame to be checked
-                    if new_past_frame is not None and new_past_frame.any() \
-                            and cooldown_timestamp + 3 < time.time():
-                        print("Comparing faces")
-                        result = compare_faces(client, new_past_frame)
-                        cooldown_timestamp = time.time()
-                        if result:
-                            face_x = result['Left'] * config.CAMERA_WIDTH
-                            face_y = result['Top'] * config.CAMERA_HEIGHT
-                            if callback is not None:
-                                callback(face_x, face_y)
-
-                    # pylint: disable=invalid-name
-                    if show_ui:
-                        for c in faces:
-                            (x, y, w, h) = c  # cv2.boundingRect(c)
-                            # pylint: enable=invalid-name
-                            print(f"Face Bounds: x: {x} y: {y} w:{w} h:{h}")
-                            cv2.rectangle(
-                                frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-                            cv2.putText(frame, str("Face"), (x, y),
-                                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0))
+                # print(f"Detecting faces took {time.time() - start_detect_faces} seconds.")
+            if faces:
+                # pylint: disable=invalid-name
+                (x, y, w, h) = faces[0]
+                # print(f"Face at {x + w/2}, {y + h/2}")
+                now = time.time()
+                if (now - last_move) > 1:
+                    callback(face_x=x + w/2, face_y=y + h/2)
+                    last_move = now
+                # Send frame to be checked
+                if new_past_frame is not None and new_past_frame.any() \
+                        and cooldown_timestamp + config.COMPARE_FACES_COOLDOWN < time.time():
+                    face_image = new_past_frame[y:y+h, x:x+w]
+                    def make_compare_faces_callback(x, y, w, h):
+                        def compare_faces_callback(result):
+                            # pylint: disable=global-statement
+                            global match
+                            global cooldown_timestamp
+                            if result:
+                                # face_x = (
+                                #     result['Left'] + result['Width']/2) * config.CAMERA_WIDTH
+                                # face_y = (
+                                #     result['Top'] + result['Height']/2) * config.CAMERA_HEIGHT
+                                match = (int(x + w/2), int(y + h/2))
+                                # print(f"Match at {face_x}, {face_y}")
+                                if callback is not None:
+                                    callback(fire=True)
+                            cooldown_timestamp = time.time()
+                        return compare_faces_callback
+                    compare_faces(client, make_compare_faces_callback(x, y, w, h), face_image)
 
             if output_filename is not None:
                 out.write(frame)
             if show_ui:
+                if match:
+                    (match_x, match_y) = match
+                    cv2.circle(frame, (match_x, match_y), 5, (0, 0, 255), 2)
+                    # cv2.rectangle(frame, , (match_x + 4, match_y + 4), (255, 0, 0), 2)
+                for c in motion or []:
+                    (x, y, w, h) = cv2.boundingRect(c)
+                    # print(f"Motion Bounds: x: {x} y: {y} w:{w} h:{h}")
+                    cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
+                for c in faces or []:
+                    (x, y, w, h) = c 
+                    # print(f"Face Bounds: x: {x} y: {y} w:{w} h:{h}")
+                    cv2.rectangle( frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+                    cv2.putText(frame, str("Face"), (x, y), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0))
+
                 rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2BGRA)
                 cv2.imshow('Face Tracking', rgb)
                 if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -135,4 +167,4 @@ def combo_tracking(stop_event, output_filename=None, show_ui=False, min_area=300
 if __name__ == "__main__":
     print("Combo Tracking")
     EVENT = threading.Event()
-    combo_tracking(EVENT, show_ui=True, output_filename="test-combo-tracking")
+    combo_tracking(EVENT, show_ui=True)

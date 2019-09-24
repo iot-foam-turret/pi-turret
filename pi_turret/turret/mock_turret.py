@@ -30,11 +30,14 @@ class Turret:
         self.yaw = yaw
 
 
-    def burst_fire(self, duration: float, completion: Callable=None):
+    def burst_fire(self, duration: float, completion: Callable = None):
         """
         Burst Fire
         """
         self.ammo = self.ammo - 22
+        self.mode = Mode.waiting
+        if completion is not None:
+            completion()
 
     def move_up(self):
         """Move up one step

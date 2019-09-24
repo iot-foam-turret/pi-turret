@@ -62,7 +62,7 @@ class Turret:
             self.ammo = self.ammo if self.ammo > 0 else 0
             if completion is not None:
                 completion()
-        burst_fire_thread = threading.Thread(target=fire, daemon=False)
+        burst_fire_thread = threading.Thread(target=fire, daemon=True)
         burst_fire_thread.start()
 
     def move(self, pitch: float, yaw: float):

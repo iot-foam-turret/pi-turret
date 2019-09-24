@@ -10,7 +10,6 @@ from pi_turret.test_scripts.combo_tracking import combo_tracking
 
 def turret_thread_target(desired_state_queue: Queue, actual_state_queue: Queue):
     turret = Turret()
-    # TODO: put calibrating state
     # turret.calibrate()
     actual_state_queue.put(map_state(
         pitch=turret.pitch,
@@ -28,7 +27,9 @@ def turret_thread_target(desired_state_queue: Queue, actual_state_queue: Queue):
             daemon=True
         )
         auto_turret_thread.start()
-    set_face_id_thread()
+        return (auto_turret_thread, stop_event)
+    auto_turret_thread, stop_event = set_face_id_thread()
+    startup_time = time.time()
     while True:
         try:
             state = desired_state_queue.get(block=True, timeout=0.1)
@@ -46,12 +47,12 @@ def turret_thread_target(desired_state_queue: Queue, actual_state_queue: Queue):
         mode = state_dict.get("mode")
         control = state_dict.get("control")
 
-        if mode == Control.faceId.value:
-            if not auto_turret_thread:
-                set_face_id_thread()
-            continue
+        # If switching to faceId start thread thread
+        if control == Control.faceId.value and not auto_turret_thread:
+            auto_turret_thread, stop_event = set_face_id_thread()
 
-        if auto_turret_thread and not stop_event.is_set():
+        # If switching to manual stop faceId thread
+        if control == Control.manual.value and auto_turret_thread and not stop_event.is_set():
             # Close the thread
             stop_event.set()
             auto_turret_thread = None
@@ -69,7 +70,7 @@ def turret_thread_target(desired_state_queue: Queue, actual_state_queue: Queue):
                 actual_state_queue.put(fire_complete_state)
 
             turret.burst_fire(0.5, fire_callback)
-
+        print(f"Moving to {pitch}, {yaw} seconds {time.time() - startup_time}")
         turret.move(pitch, yaw)
         new_state = map_state(
             pitch=turret.pitch,
@@ -85,34 +86,39 @@ def combo_tracking_target(desired_state_queue: Queue, turret: Turret, stop_event
     """
     combo_tracking_target
     """
-    def callback(face_x, face_y):
-        # TODO Map
+    def update_turret_callback(face_x=None, face_y=None, fire=False):
         # Camera x to view angle
         # y = 0.0421875x -27
 
         # Camera y to view angle
         # y = -0.05694444444x + 20.5
-        pitch = -0.05694444444 * face_y + 20.5 #turret.pitch + face_y
-        yaw = 0.0421875 * face_x -27 #turret.yaw + face_x
+        if face_x is not None and face_y is not None:
+            pitch = -0.05694444444 * face_y + 20.5 - turret.pitch
+            yaw = 0.0421875 * face_x - 27 - turret.yaw
+        else:
+            pitch = turret.pitch
+            yaw = turret.yaw
         new_state = map_state(
             pitch=pitch,
             yaw=-yaw,
             control=Control.faceId,
-            mode=Mode.firing
+            mode=Mode.firing if fire else Mode.waiting
         )
         desired_state_queue.put({
             "state": new_state
         })
-    combo_tracking(stop_event, callback=callback)
+
+    combo_tracking(stop_event, callback=update_turret_callback)
 
 
 def shadow_client_thread_target(desired_state_queue: Queue, actual_state_queue: Queue):
     shadow_client = TurretShadowClient()
 
     def shadow_updated(payload, responseStatus, token):
-        print("Payload Reported: ")
-        print(payload)
-        print("--------------\n")
+        # print("Payload Reported: ")
+        # print(payload)
+        # print("--------------\n")
+        pass
 
     def shadow_delta_callback(payload, responseStatus, token):
         print("Payload Received: ")

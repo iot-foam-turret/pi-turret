@@ -90,7 +90,7 @@ class TurretShadowClient:
 
 if __name__ == "__main__":
     from pi_turret.iot.turret.control import Control
-    from pi_turret.iot.turret.mode import Mode
+    from pi_turret.turret.mode import Mode
     CLIENT = TurretShadowClient()
 
     def customCallback(payload, responseStatus, token):

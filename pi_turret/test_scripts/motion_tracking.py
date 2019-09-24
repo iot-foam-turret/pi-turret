@@ -1,6 +1,7 @@
 """Function to detect motion on a video feed"""
 import time
 import cv2
+import pi_turret.config as config
 from pi_turret.camera.webcam_frames import WebcamFrames
 
 
@@ -64,7 +65,7 @@ def test_motion_tracking(output_filename=None, show_ui=False):
         out = None
         if output_filename is not None:
             out = cv2.VideoWriter(
-                f"{output_filename}.avi", cv2.VideoWriter_fourcc(*'H264'), 10, (640, 480))
+                f"{output_filename}.avi", cv2.VideoWriter_fourcc(*'H264'), 10, config.CAMERA_RESOLUTION)
         for frame in frame_source:
             frames += 1
             new_past_frame, motion = handle_new_frame(
