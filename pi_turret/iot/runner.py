@@ -8,17 +8,22 @@ from pi_turret.turret import Turret, Mode
 from pi_turret.test_scripts.combo_tracking import combo_tracking
 
 
-def turret_thread_target(desired_state_queue: Queue, actual_state_queue: Queue):
+def turret_thread_target(desired_state_queue: Queue, actual_state_queue: Queue, stop_turret_event: threading.Event):
     turret = Turret()
     # turret.calibrate()
-    actual_state_queue.put(map_state(
-        pitch=turret.pitch,
-        yaw=turret.yaw,
-        ammo=turret.ammo,
-        mode=turret.mode
-    ))
+    desired_state_queue.put(
+        {
+            "state": map_state(
+                pitch=turret.pitch,
+                yaw=turret.yaw,
+                ammo=turret.ammo,
+                mode=turret.mode
+            )
+        }
+    )
     auto_turret_thread = None
     stop_event = None
+
     def set_face_id_thread():
         stop_event = threading.Event()
         auto_turret_thread = threading.Thread(
@@ -28,17 +33,17 @@ def turret_thread_target(desired_state_queue: Queue, actual_state_queue: Queue):
         )
         auto_turret_thread.start()
         return (auto_turret_thread, stop_event)
-    auto_turret_thread, stop_event = set_face_id_thread()
+    # auto_turret_thread, stop_event = set_face_id_thread()
     startup_time = time.time()
     while True:
+        if stop_turret_event.is_set():
+            break
         try:
             state = desired_state_queue.get(block=True, timeout=0.1)
         except Empty:
             # Don't peg the CPU
             time.sleep(0.02)
             continue
-        if state == "CLOSE":
-            break
         state_dict = state.get("state")
         if state_dict is None:
             continue
@@ -81,6 +86,9 @@ def turret_thread_target(desired_state_queue: Queue, actual_state_queue: Queue):
         )
         actual_state_queue.put(new_state)
 
+    #Cleanup (Not sure why this isn't happening without explicit calls)
+    turret.yaw_motor.motor.release()
+    turret.pitch_motor.motor.release()
 
 def combo_tracking_target(desired_state_queue: Queue, turret: Turret, stop_event):
     """
@@ -94,7 +102,7 @@ def combo_tracking_target(desired_state_queue: Queue, turret: Turret, stop_event
         # y = -0.05694444444x + 20.5
         if face_x is not None and face_y is not None:
             pitch = -0.05694444444 * face_y + 20.5 - turret.pitch
-            yaw = 0.0421875 * face_x - 27 - turret.yaw
+            yaw = -0.0421875 * face_x + 27 - turret.yaw
         else:
             pitch = turret.pitch
             yaw = turret.yaw
@@ -108,10 +116,10 @@ def combo_tracking_target(desired_state_queue: Queue, turret: Turret, stop_event
             "state": new_state
         })
 
-    combo_tracking(stop_event, callback=update_turret_callback)
+    combo_tracking(stop_event, callback=update_turret_callback, show_ui=True)
 
 
-def shadow_client_thread_target(desired_state_queue: Queue, actual_state_queue: Queue):
+def shadow_client_thread_target(desired_state_queue: Queue, actual_state_queue: Queue, stop_event: threading.Event):
     shadow_client = TurretShadowClient()
 
     def shadow_updated(payload, responseStatus, token):
@@ -134,6 +142,8 @@ def shadow_client_thread_target(desired_state_queue: Queue, actual_state_queue: 
         shadow_client.subscribe(shadow_delta_callback)
 
         while True:
+            if stop_event.is_set():
+                break
             try:
                 state = actual_state_queue.get(block=False, timeout=0.1)
             except Empty:
@@ -148,13 +158,14 @@ def shadow_client_thread_target(desired_state_queue: Queue, actual_state_queue: 
 def main():
     desired_state_queue = Queue()
     actual_state_queue = Queue()
+    close_event = threading.Event()
 
     turret_thread = threading.Thread(target=turret_thread_target, args=(
-        desired_state_queue, actual_state_queue), daemon=True)
+        desired_state_queue, actual_state_queue, close_event), daemon=True)
     turret_thread.start()
 
     shadow_client_thread = threading.Thread(target=shadow_client_thread_target, args=(
-        desired_state_queue, actual_state_queue), daemon=True)
+        desired_state_queue, actual_state_queue, close_event), daemon=True)
     shadow_client_thread.start()
 
     # Not sure if we need the main thread to do anything
@@ -163,5 +174,5 @@ def main():
             time.sleep(2)
     except:
         print("Closing")
-        desired_state_queue.put("CLOSE", block=False)
+        close_event.set()
         time.sleep(2)

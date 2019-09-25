@@ -1,3 +1,4 @@
+# from pi_turret.turret.mock_turret import Turret
 try:
     from pi_turret.turret.turret import Turret
 except ImportError:

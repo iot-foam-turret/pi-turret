@@ -5,7 +5,7 @@ lint:
 	pylint --extension-pkg-whitelist=cv2 pi_turret
 
 run:
-	python -m pi_turret -c $(c)
+	python -m pi_turret
 
 dev:
 	# python -m pi_turret.camera.picam_frames

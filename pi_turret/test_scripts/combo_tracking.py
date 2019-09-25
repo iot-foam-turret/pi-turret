@@ -43,6 +43,7 @@ def compare_faces(client: Client, callback: Callable, target_image, source_image
                 'Name': source_key
             }
         }
+
     def compare_faces_target():
         response = client.compare_faces(SimilarityThreshold=70,
                                         SourceImage=source_image_payload,
@@ -60,11 +61,14 @@ def compare_faces(client: Client, callback: Callable, target_image, source_image
                 return
             callback(None)
 
-    compare_faces_thread = threading.Thread(target=compare_faces_target, daemon=True)
+    compare_faces_thread = threading.Thread(
+        target=compare_faces_target, daemon=True)
     compare_faces_thread.start()
+
 
 cooldown_timestamp = time.time()
 match = None
+
 
 def combo_tracking(stop_event, output_filename=None, show_ui=False, min_area=300, callback: Callable = None):
     """
@@ -92,7 +96,7 @@ def combo_tracking(stop_event, output_filename=None, show_ui=False, min_area=300
             if stop_event.is_set():
                 break
             frames += 1
-            # start_detect_faces = time.time()
+
             new_past_frame, motion = handle_new_frame(
                 frame, past_frame, min_area)
 
@@ -103,16 +107,23 @@ def combo_tracking(stop_event, output_filename=None, show_ui=False, min_area=300
                 # print(f"Detecting faces took {time.time() - start_detect_faces} seconds.")
             if faces:
                 # pylint: disable=invalid-name
-                (x, y, w, h) = faces[0]
+                (x, y, w, h) = (None, None, 0, 0)
+                face_found = False
+                for face in faces:
+                    (current_x, current_y, current_w, current_h) = face
+                    face_size = current_w * current_h
+                    if w * h < face_size and face_size < config.MAX_FACE_SIZE:
+                        (x, y, w, h) = face
+                        face_found = True
                 # print(f"Face at {x + w/2}, {y + h/2}")
                 now = time.time()
-                if (now - last_move) > 1:
+                if face_found and (now - last_move) > config.FACE_TRACKING_COOLDOWN:
                     callback(face_x=x + w/2, face_y=y + h/2)
                     last_move = now
                 # Send frame to be checked
-                if new_past_frame is not None and new_past_frame.any() \
-                        and cooldown_timestamp + config.COMPARE_FACES_COOLDOWN < time.time():
-                    face_image = new_past_frame[y:y+h, x:x+w]
+                if face_found and (cooldown_timestamp - now) > config.COMPARE_FACES_COOLDOWN:
+                    face_image = frame[y:y+h, x:x+w]
+
                     def make_compare_faces_callback(x, y, w, h):
                         def compare_faces_callback(result):
                             # pylint: disable=global-statement
@@ -141,12 +152,15 @@ def combo_tracking(stop_event, output_filename=None, show_ui=False, min_area=300
                 for c in motion or []:
                     (x, y, w, h) = cv2.boundingRect(c)
                     # print(f"Motion Bounds: x: {x} y: {y} w:{w} h:{h}")
-                    cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
+                    cv2.rectangle(frame, (x, y), (x + w, y + h),
+                                  (255, 0, 0), 2)
                 for c in faces or []:
-                    (x, y, w, h) = c 
+                    (x, y, w, h) = c
                     # print(f"Face Bounds: x: {x} y: {y} w:{w} h:{h}")
-                    cv2.rectangle( frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-                    cv2.putText(frame, str("Face"), (x, y), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0))
+                    cv2.rectangle(frame, (x, y), (x + w, y + h),
+                                  (0, 255, 0), 2)
+                    cv2.putText(frame, str("Face"), (x, y),
+                                cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0))
 
                 rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2BGRA)
                 cv2.imshow('Face Tracking', rgb)
