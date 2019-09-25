@@ -140,7 +140,7 @@ def combo_tracking(stop_event, output_filename=None, show_ui=False, min_area=300
                                     callback(fire=True)
                             cooldown_timestamp = time.time()
                         return compare_faces_callback
-                    compare_faces(client, make_compare_faces_callback(x, y, w, h), face_image)
+                    # compare_faces(client, make_compare_faces_callback(x, y, w, h), face_image)
 
             if output_filename is not None:
                 out.write(frame)

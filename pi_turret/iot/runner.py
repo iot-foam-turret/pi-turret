@@ -2,6 +2,7 @@ import threading
 import time
 import json
 from queue import Queue, Empty
+import pi_turret.config as config
 from pi_turret.iot.turret.shadow_client import TurretShadowClient, map_state
 from pi_turret.iot.turret.control import Control
 from pi_turret.turret import Turret, Mode
@@ -101,8 +102,8 @@ def combo_tracking_target(desired_state_queue: Queue, turret: Turret, stop_event
         # Camera y to view angle
         # y = -0.05694444444x + 20.5
         if face_x is not None and face_y is not None:
-            pitch = -0.05694444444 * face_y + 20.5 - turret.pitch
-            yaw = -0.0421875 * face_x + 27 - turret.yaw
+            pitch = -0.05 * face_y + 20.5 - turret.pitch
+            yaw = -0.04 * face_x + 27 - turret.yaw
         else:
             pitch = turret.pitch
             yaw = turret.yaw
@@ -112,11 +113,12 @@ def combo_tracking_target(desired_state_queue: Queue, turret: Turret, stop_event
             control=Control.faceId,
             mode=Mode.firing if fire else Mode.waiting
         )
-        desired_state_queue.put({
-            "state": new_state
-        })
+        if config.PITCH_MAX > abs(pitch) and config.YAW_MAX > abs(yaw):
+            desired_state_queue.put({
+                "state": new_state
+            })
 
-    combo_tracking(stop_event, callback=update_turret_callback, show_ui=True)
+    combo_tracking(stop_event, callback=update_turret_callback, show_ui=False)
 
 
 def shadow_client_thread_target(desired_state_queue: Queue, actual_state_queue: Queue, stop_event: threading.Event):

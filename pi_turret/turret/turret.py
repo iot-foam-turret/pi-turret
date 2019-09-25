@@ -4,6 +4,7 @@ Main Blaster Turret
 import time
 import threading
 from typing import Callable
+import pi_turret.config as config
 from pi_turret.blaster.hyperfire import Hyperfire
 from pi_turret.stepper_motor.stepper import StepperMotor, STEP_DEGREES
 from pi_turret.stepper_motor.stepper_slot import StepperMotorSlot
@@ -15,9 +16,6 @@ class Turret:
     """
     Turret that can move left/right and up/down
     """
-
-    yaw_max = 90 # Maybe need to cut this in half
-    pitch_max = 27
     darts_per_second = 8
 
     def __init__(self):
@@ -105,13 +103,13 @@ class Turret:
         """
         Return true if the yaw position is beyond the functional bound.
         """
-        return self.yaw > self.yaw_max or self.yaw < -self.yaw_max
+        return self.yaw > config.YAW_MAX or self.yaw < -config.YAW_MAX
 
     def pitch_stop(self):
         """
         Return true if the pitch position is beyond the functional bound.
         """
-        return self.pitch > self.pitch_max or self.pitch < -self.pitch_max
+        return self.pitch > config.PITCH_MAX or self.pitch < -config.PITCH_MAX
 
     def move_up(self):
         """Move up one step
